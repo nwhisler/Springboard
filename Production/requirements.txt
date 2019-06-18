@@ -1,0 +1,8 @@
+afinn
+pandas==0.24.2
+numpy==1.16.2
+xgboost==0.82
+nltk==3.4
+spacy==2.1.4
+flask==1.0.2
+jinja==2.10

@@ -22,28 +22,47 @@ from utils import twitter_model_logging
 
 class twitter_model(object):
 
-	def __init__(self,input_data):
+	def __init__(self,file):
 
 		filterwarnings('ignore','elementwise')
 		logging.basicConfig(filename='twitter_model.log',level=logging.DEBUG)
 		self.twitter_logger = twitter_model_logging()
 
-		if isinstance(input_data,str) != True:
+		if isinstance(file,str) != True:
 
-			logging.debug('Input data not string. Raised IOError.' + datetime.now().strftime('%a %b %d %Y at %H:%M:%S'))
-			raise ValueError('Input data not string.')
+			logging.debug('File path not string. Raised IOError.' + datetime.now().strftime('%a %b %d %Y at %H:%M:%S'))
+			raise ValueError('File path not string.')
 
 		else:
             
-			try:
+			if file.endswith('csv'):
 
-				input_data = json.loads(input_data)                
-				self.df = pd.DataFrame(input_data)
+				try:
+
+					self.df = pd.read_csv(file)
+
+				except:
+
+					logging.debug('Incorrect data format. Raised IOError.' + datetime.now().strftime('%a %b %d %Y at %H:%M:%S'))
+					raise IOError('Incorrect data format.')
                 
-			except:
+			elif file.endswith('json'):
+
+				try:
+
+					self.df = pd.read_json(file)
+
+				except:
+
+					logging.debug('Incorrect data format. Raised IOError.' + datetime.now().strftime('%a %b %d %Y at %H:%M:%S'))
+					raise IOError('Incorrect data format.')
+
+			else:
                 
-				logging.debug('Incorrect data format. Raised IOError.' + datetime.now().strftime('%a %b %d %Y at %H:%M:%S'))
-				raise IOError('Incorrect data format.')                
+				logging.debug('Incorrect file format. Raised IOError.' + datetime.now().strftime('%a %b %d %Y at %H:%M:%S'))
+				raise IOError('Incorrect file format.')
+
+		self.tickers = self.df.ticker.values              
 
 		self.columns_required = ['text','background_image','favorite_count','geo_enabled','reply','urls',\
 							'user.favourites_count','user.friends_count','user.listed_count',\
@@ -92,13 +111,13 @@ class twitter_model(object):
 
 		self.text = self.df.text.values
 
-		spacy_file = self.twitter_logger.check_file_path('../twitter/en_core_web_sm-2.1.0/en_core_web_sm/en_core_web_sm-2.1.0')
+		spacy_file = self.twitter_logger.check_file_path('en_core_web_sm-2.1.0/en_core_web_sm/en_core_web_sm-2.1.0')
 		self.nlp = spacy.load(spacy_file)
 
 		self.tknzr = RegexpTokenizer('[a-zA-Z]+')
 		self.stop_words = punctuation_parse + word_parse
 
-		embedding_file = self.twitter_logger.check_file_path('../glove.6B.300d.txt')
+		embedding_file = self.twitter_logger.check_file_path('glove.6B.300d.txt')
 		fh = open(embedding_file,'r',buffering=4096,encoding='UTF-8')
 		self.word_embeddings = {}
 
@@ -282,20 +301,20 @@ class twitter_model(object):
 
 		return predictions
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-	time = datetime.now()
-	df_data = pd.read_csv('testing_data.csv')
-	data = df_data[df_data.columns[1:]].to_json()
-	model = twitter_model(data)
-	print('Preprocessing: ', datetime.now()-time)
-	generating_features_time = datetime.now()
-	model.feature_generation()
-	print('Feature generation: ', datetime.now() - generating_features_time)
-	eval_time = datetime.now()
-	predictions = model.evaluate()
-	print('Evaluation time: ',datetime.now()-eval_time)
-	print('Total time: ',datetime.now()-time)
-	df_features = model.df
-	df_features['predictions'] = predictions
-	print(df_features)
+# 	time = datetime.now()
+# 	df_data = pd.read_csv('testing_data.csv')
+# 	data = df_data[df_data.columns[1:]].to_json()
+# 	model = twitter_model(data)
+# 	print('Preprocessing: ', datetime.now()-time)
+# 	generating_features_time = datetime.now()
+# 	model.feature_generation()
+# 	print('Feature generation: ', datetime.now() - generating_features_time)
+# 	eval_time = datetime.now()
+# 	predictions = model.evaluate()
+# 	print('Evaluation time: ',datetime.now()-eval_time)
+# 	print('Total time: ',datetime.now()-time)
+# 	df_features = model.df
+# 	df_features['predictions'] = predictions
+# 	print(df_features)
